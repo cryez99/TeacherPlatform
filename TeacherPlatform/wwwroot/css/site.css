@@ -1,0 +1,278 @@
+:root {
+    --primary-color: #2a3f54;
+    --secondary-color: #1abb9c;
+    --accent-color: #e74c3c;
+    --light-color: #f7f7f7;
+    --dark-color: #34495e;
+    --text-color: #333;
+    --text-light: #7f8c8d;
+    --gold-accent: #d4af37;
+}
+
+html {
+    font-size: 14px;
+    scroll-behavior: smooth;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+    background-color: #f9f9f9;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Основная навигация */
+.navbar {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--dark-color) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 0.8rem 1rem;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: white !important;
+    display: flex;
+    align-items: center;
+}
+
+    .navbar-brand i {
+        margin-right: 10px;
+        font-size: 1.4rem;
+        color: var(--gold-accent);
+    }
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    margin: 0 0.2rem;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+}
+
+    .nav-link:hover {
+        color: white !important;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-link i {
+        margin-right: 8px;
+    }
+
+/* Кнопки */
+.btn {
+    border-radius: 4px;
+    padding: 0.5rem 1.2rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+    .btn-primary:hover {
+        background-color: #1f2e3f;
+        border-color: #1f2e3f;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+/* Карточки */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--dark-color) 100%);
+    color: white;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border-bottom: none;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Таблицы */
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+    .table thead th {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+        border: none;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+        .table tbody tr:hover {
+            background-color: rgba(42, 63, 84, 0.03);
+            transform: translateX(5px);
+        }
+
+    .table td, .table th {
+        padding: 1rem;
+        vertical-align: middle;
+        border-top: 1px solid rgba(0, 0, 0, 0.03);
+    }
+
+/* Бейджи */
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border-radius: 4px;
+}
+
+.badge-primary {
+    background-color: var(--primary-color);
+}
+
+.badge-success {
+    background-color: var(--secondary-color);
+}
+
+.badge-warning {
+    background-color: #f39c12;
+}
+
+/* Формы */
+.form-control {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    padding: 0.6rem 1rem;
+    transition: all 0.3s ease;
+}
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(42, 63, 84, 0.25);
+    }
+
+/* Футер */
+.footer {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 2rem 0;
+    margin-top: auto;
+}
+
+    .footer a {
+        color: rgba(255, 255, 255, 0.8);
+        transition: color 0.3s ease;
+    }
+
+        .footer a:hover {
+            color: white;
+            text-decoration: none;
+        }
+
+/* Анимации */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animated-card {
+    animation: fadeIn 0.6s ease forwards;
+}
+
+/* Кастомные элементы */
+.gold-text {
+    color: var(--gold-accent);
+}
+
+.divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1), transparent);
+    margin: 1.5rem 0;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .table-responsive {
+        border: 0;
+    }
+
+    .table thead {
+        display: none;
+    }
+
+    .table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    }
+
+        .table td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            margin-right: 1rem;
+            color: var(--primary-color);
+        }
+
+
+}

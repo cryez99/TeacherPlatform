@@ -1,0 +1,65 @@
+﻿@model List<Student>
+@{
+    ViewData["Title"] = "Мои ученики";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-person"></i> @ViewData["Title"]</h2>
+        <div>
+            <a asp-action="ExportToWord" class="btn btn-success me-2">
+                <i class="bi bi-file-earmark-word"></i> Выгрузить отчет
+            </a>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Добавить ученика
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ФИО</th>
+                    <th>Класс</th>
+                    <th>Контакт</th>
+                    <th>Информация о ученике</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in Model)
+                {
+                    <tr>
+                        <td>@student.FullName</td>
+                        <td>@student.Class</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(student.Email))
+                            {
+                                <div>@student.Email</div>
+                            }
+                            @if (!string.IsNullOrEmpty(student.Phone))
+                            {
+                                <div>@student.Phone</div>
+                            }
+                        </td>
+                        <td>@student.AdditionalInfo</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@student.StudentId"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Delete" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@student.StudentId" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('Удалить этого ученика?')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

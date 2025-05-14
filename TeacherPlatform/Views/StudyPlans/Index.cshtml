@@ -1,0 +1,73 @@
+﻿@model List<StudyPlan>
+@{
+    ViewData["Title"] = "Учебные планы";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-journal-bookmark"></i> @ViewData["Title"]</h2>
+        <div>
+            <a asp-action="ExportToWord" class="btn btn-success me-2">
+                <i class="bi bi-file-earmark-word"></i> Выгрузить отчет
+            </a>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Новый план
+            </a>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    @foreach (var plan in Model)
+                    {
+                        <div class="list-group-item border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="w-75">
+                                    <h5 class="mb-1">@plan.Title</h5>
+                                    <div class="d-flex flex-wrap gap-3 text-muted small">
+                                        <span><i class="bi bi-calendar"></i> Начало: @plan.StartDate.ToString("d")</span>
+                                        <span><i class="bi bi-book"></i> Уроков: @plan.LessonsPerWeek/неделю</span>
+                                        @if (plan.Students.Any())
+                                        {
+                                            <span><i class="bi bi-person"></i> Ученик: @plan.Students.First().FullName</span>
+                                        }
+                                        <span><i class="bi bi-list-check"></i> Тем: @plan.Topics.Count</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <a asp-action="Details" asp-route-id="@plan.StudyPlanId"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> Подробнее
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> У вас пока нет учебных планов. Создайте первый!
+        </div>
+    }
+</div>
+
+<style>
+    .list-group-item {
+        transition: background-color 0.2s;
+    }
+
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+
+    .gap-3 {
+        gap: 1rem;
+    }
+</style>

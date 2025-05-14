@@ -1,0 +1,167 @@
+﻿@model StudyPlanCreateModel
+
+<h2>Создать учебный план</h2>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="form-group mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label asp-for="LessonsPerWeek" class="form-label"></label>
+            <input asp-for="LessonsPerWeek" class="form-control" />
+            <span asp-validation-for="LessonsPerWeek" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="LessonDurationMinutes" class="form-label"></label>
+            <input asp-for="LessonDurationMinutes" class="form-control" />
+            <span asp-validation-for="LessonDurationMinutes" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="StartDate" class="form-label"></label>
+            <input asp-for="StartDate" type="date" class="form-control" />
+            <span asp-validation-for="StartDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="LessonStartTime" class="form-label"></label>
+            <input asp-for="LessonStartTime" type="time" class="form-control"
+                   value="@Model.LessonStartTime.ToString(@"hh\:mm")" />
+            <span asp-validation-for="LessonStartTime" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group mb-3">
+        <label class="form-label">Дни занятий:</label>
+        <div class="row">
+            @foreach (var day in ViewBag.DaysOfWeek)
+            {
+                <div class="col-md-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                               id="day-@day" name="SelectedDays" value="@day"
+                        @(Model.SelectedDays.Contains(day) ? "checked" : "")>
+                        <label class="form-check-label" for="day-@day">
+                            @day.ToString()
+                        </label>
+                    </div>
+                </div>
+            }
+        </div>
+        <span asp-validation-for="SelectedDays" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label class="form-label">Ученики:</label>
+        <div class="card">
+            <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                @foreach (var student in ViewBag.Students)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                               id="student-@student.StudentId"
+                               name="SelectedStudentIds"
+                               value="@student.StudentId"
+                        @(Model.SelectedStudentIds.Contains(student.StudentId) ? "checked" : "")>
+                        <label class="form-check-label" for="student-@student.StudentId">
+                            @student.FullName
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+        <span asp-validation-for="SelectedStudentIds" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label class="form-label">Темы для изучения:</label>
+        <div class="card">
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                @foreach (var topic in ViewBag.Topics)
+                {
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input topic-checkbox" type="checkbox"
+                                   id="topic-@topic.TopicId"
+                                   name="SelectedTopicIds"
+                                   value="@topic.TopicId"
+                            @(Model.SelectedTopicIds.Contains(topic.TopicId) ? "checked" : "")>
+                            <label class="form-check-label fw-bold" for="topic-@topic.TopicId">
+                                @topic.Title
+                            </label>
+                        </div>
+
+                        <div class="ms-4 mt-2">
+                            @foreach (var subTopic in topic.SubTopics)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input subtopic-checkbox" type="checkbox"
+                                           id="subtopic-@subTopic.SubTopicId"
+                                           data-topic="@topic.TopicId"
+                                    @(Model.SelectedTopicIds.Contains(topic.TopicId) ? "checked" : "disabled")>
+                                    <label class="form-check-label" for="subtopic-@subTopic.SubTopicId">
+                                        @subTopic.Title
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        <span asp-validation-for="SelectedTopicIds" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Создать план</button>
+    <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function() {
+            // Обработка выбора тем и подтем
+            $('.topic-checkbox').change(function() {
+                const topicId = $(this).val();
+                const isChecked = $(this).is(':checked');
+
+                // Включаем/выключаем подтемы
+                $(`.subtopic-checkbox[data-topic="${topicId}"]`)
+                    .prop('disabled', !isChecked)
+                    .prop('checked', isChecked);
+            });
+
+            // Инициализируем состояние подтем при загрузке
+            $('.topic-checkbox').each(function() {
+                const topicId = $(this).val();
+                const isChecked = $(this).is(':checked');
+
+                $(`.subtopic-checkbox[data-topic="${topicId}"]`)
+                    .prop('disabled', !isChecked)
+                    .prop('checked', isChecked);
+            });
+        });
+    </script>
+
+    <style>
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .card {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+    </style>
+}

@@ -1,0 +1,53 @@
+﻿@model StudentEditModel
+
+@{
+    ViewData["Title"] = "Редактировать ученика";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Edit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="StudentId" />
+
+    <div class="form-group">
+        <label asp-for="FullName" class="control-label">ФИО ученика</label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="Class" class="control-label">Класс ученика</label>
+        <input asp-for="Class" class="form-control" />
+        <span asp-validation-for="Class" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="Email" class="control-label">Личная почта ученика</label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="Phone" class="control-label">Номер телефона ученика</label>
+        <input asp-for="Phone" class="form-control" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="AdditionalInfo" class="control-label">Полная информация об ученике(класс, проблемные темы)</label>
+        <textarea asp-for="AdditionalInfo" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="AdditionalInfo" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-4">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

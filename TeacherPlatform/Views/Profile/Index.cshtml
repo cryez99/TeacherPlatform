@@ -1,0 +1,45 @@
+﻿@model ProfileViewModel
+@{
+    ViewData["Title"] = "Профиль";
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <!-- Основной контент -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Личный профиль</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Update" method="post">
+                        <input type="hidden" asp-for="UserId" />
+
+                        <div class="form-group">
+                            <label asp-for="Email">Электронная почта</label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="FullName">Полное имя</label>
+                            <input asp-for="FullName" class="form-control" />
+                            <span asp-validation-for="FullName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Дата регистрации</label>
+                            <input class="form-control" value="@Model.CreatedAt.ToString("dd.MM.yyyy")" readonly />
+                            <input type="hidden" asp-for="CreatedAt" />
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                            <a asp-action="ChangePassword" class="btn btn-secondary ml-2">Сменить пароль</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

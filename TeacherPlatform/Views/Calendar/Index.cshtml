@@ -1,0 +1,102 @@
+﻿@model List<Lesson>
+
+@{
+    ViewData["Title"] = "Календарь занятий";
+
+    // Отладочная информация
+    var debugInfo = $"Всего уроков: {Model.Count}, StudentIds: " +
+                   string.Join(", ", Model.Select(l => l.Student?.StudentId).Distinct());
+
+    // Получаем всех уникальных учеников (исключаем null)
+    var students = Model.Where(l => l.Student != null)
+                      .Select(l => l.Student)
+                      .Distinct()
+                      .OrderBy(s => s.FullName)
+                      .ToList();
+
+    // Получаем выбранный studentId как строку
+    var selectedStudentId = Context.Request.Query["studentId"].FirstOrDefault();
+
+    // Сортируем уроки по дате (основная сортировка)
+    var filteredLessons = Model.OrderBy(l => l.StartTime).ToList();
+
+    // Применяем фильтр по ученику, если выбран
+    if (!string.IsNullOrEmpty(selectedStudentId))
+    {
+        filteredLessons = filteredLessons
+            .Where(l => l.Student != null && l.Student.StudentId.ToString() == selectedStudentId)
+            .ToList();
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar-check"></i> @ViewData["Title"]</h2>
+    <div>
+        <a asp-action="ExportToWord" class="btn btn-success me-2">
+            <i class="bi bi-file-earmark-word"></i> Выгрузить отчет
+        </a>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Добавить урок
+        </a>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <form method="get" class="form-inline">
+            <div class="input-group">
+                <select name="studentId" class="form-select" onchange="this.form.submit()">
+                    <option value="">Все ученики</option>
+                    @foreach (var student in students)
+                    {
+                        <option value="@student.StudentId"
+                                selected="@(student.StudentId.ToString() == selectedStudentId)">
+                            @student.FullName
+                        </option>
+                    }
+                </select>
+                @if (!string.IsNullOrEmpty(selectedStudentId))
+                {
+                    <a asp-action="Index" class="btn btn-outline-secondary">Сбросить</a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Тема урока</th>
+            <th>Ученик</th>
+            <th>Дата и время</th>
+            <th>Заметки урока</th>
+            <th>Статус</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var lesson in filteredLessons)
+        {
+            <tr>
+                <td>@lesson.Title</td>
+                <td>@lesson.Student?.FullName</td>
+                <td>@lesson.StartTime.ToString("g") - @lesson.EndTime.ToString("t")</td>
+                <td>@lesson.Description</td>
+                <td>@lesson.GetLocalizedStatus()</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@lesson.LessonId" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form asp-action="Delete" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@lesson.LessonId" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Удалить урок с данным учеником?')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,41 @@
+﻿@model Lesson
+@{
+    ViewData["Title"] = "Создать урок";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+
+<form method="post">
+    <div class="form-group">
+        <label for="title">Тема урока:</label>
+        <input type="text" id="title" name="Title" class="form-control" value="@Model.Title" required>
+    </div>
+
+    <div class="form-group">
+        <label for="student">Ученик:</label>
+        <select id="student" name="StudentId" class="form-control" required>
+            <option value="">Выберите ученика</option>
+            @foreach (var student in ViewBag.Students)
+            {
+                <option value="@student.StudentId">@student.FullName</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="start">Начало:</label>
+        <input type="datetime-local" id="start" name="StartTime"
+               class="form-control"
+               value="@Model.StartTime.ToString("yyyy-MM-ddTHH:mm")" required>
+    </div>
+
+    <div class="form-group">
+        <label for="end">Окончание:</label>
+        <input type="datetime-local" id="end" name="EndTime"
+               class="form-control"
+               value="@Model.EndTime.ToString("yyyy-MM-ddTHH:mm")" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Создать</button>
+</form>

@@ -1,0 +1,135 @@
+﻿@model DashboardViewModel
+@{
+    ViewData["Title"] = "Личный кабинет";
+    Layout = "_Layout";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="bi bi-speedometer2"></i> Добро пожаловать, @Model.TutorName!</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Статистика сегодняшних занятий -->
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-calendar-check"></i> Сегодня у вас @Model.TodaysLessonsCount занятий</h5>
+                    </div>
+
+                    <!-- Ближайшие занятия -->
+                    <h5 class="mb-3"><i class="bi bi-alarm"></i> Ближайшие занятия</h5>
+
+                    @if (Model.UpcomingLessons.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Дата и время</th>
+                                        <th>Ученик</th>
+                                        <th>Тема</th>
+                                        <th>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var lesson in Model.UpcomingLessons)
+                                    {
+                                        <tr>
+                                            <td>@lesson.StartTime.ToString("g")</td>
+                                            <td>@lesson.Student?.FullName</td>
+                                            <td>@lesson.Title</td>
+                                            <td>
+                                                <span class="badge @GetStatusBadgeClass(lesson.Status)">
+                                                    @GetStatusRussianName(lesson.Status)
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            Нет предстоящих занятий
+                        </div>
+                    }
+
+                    <h5 class="mt-4 mb-3"><i class="bi bi-graph-up"></i> Ваша статистика</h5>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card text-white h-100" style="background: linear-gradient(135deg, var(--primary-color) 0%, #3a5169 100%);">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-people"></i> Ученики</h5>
+                                    <p class="card-text display-4">@Model.StudentCount</p>
+                                    <div class="stat-progress" style="height: 4px; background: rgba(255,255,255,0.2);">
+                                        <div class="progress-bar" style="width: 100%; height: 100%; background: var(--gold-accent);"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card text-white h-100" style="background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%);">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-calendar-plus"></i> Запланировано</h5>
+                                    <p class="card-text display-4">@Model.ScheduledLessonsCount</p>
+                                    <div class="stat-progress" style="height: 4px; background: rgba(255,255,255,0.2);">
+                                        <div class="progress-bar" style="width: 100%; height: 100%; background: #e67e22;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card text-white h-100" style="background: linear-gradient(135deg, var(--secondary-color) 0%, #2ecc71 100%);">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-check-circle"></i> Проведено</h5>
+                                    <p class="card-text display-4">@Model.CompletedLessonsCount</p>
+                                    <div class="stat-progress" style="height: 4px; background: rgba(255,255,255,0.2);">
+                                        <div class="progress-bar" style="width: 100%; height: 100%; background: #27ae60;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card text-white h-100" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-journal-text"></i> Планы</h5>
+                                    <p class="card-text display-4">@Model.StudyPlansCount</p>
+                                    <div class="stat-progress" style="height: 4px; background: rgba(255,255,255,0.2);">
+                                        <div class="progress-bar" style="width: 100%; height: 100%; background: var(--gold-accent);"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Planned" => "bg-warning",
+            "Completed" => "bg-success",
+            "Cancelled" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetStatusRussianName(string status)
+    {
+        return status switch
+        {
+            "Planned" => "Запланировано",
+            "Completed" => "Проведено",
+            "Cancelled" => "Отменено",
+            _ => status
+        };
+    }
+}
