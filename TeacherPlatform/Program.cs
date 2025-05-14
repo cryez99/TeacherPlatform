@@ -13,15 +13,9 @@ namespace TeacherPlatform
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            //// 1. Настройка базы данных
-            //builder.Services.AddDbContext<TutorDbContext>(options =>
-            //    options.UseNpgsql(builder.Configuration.GetConnectionString("TutorDbContext")));
-
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                 ?? Environment.GetEnvironmentVariable("DATABASE_URL");
-
+            // 1. Настройка базы данных
             builder.Services.AddDbContext<TutorDbContext>(options =>
-                options.UseNpgsql(connectionString));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("TutorDbContext")));
 
             // 3. Настройка аутентификации
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
