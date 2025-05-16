@@ -50,14 +50,6 @@ namespace TeacherPlatform.Models
         [Required]
         public User Tutor { get; set; }
 
-        [ForeignKey("StudyPlan")]
-        [Column("study_plan_id")]
-        [Display(Name = "Учебный план")]
-        public int? StudyPlanId { get; set; }
-
-        [Display(Name = "Учебный план")]
-        public StudyPlan? StudyPlan { get; set; }
-
         // Навигационные свойства
         public ICollection<Lesson>? Lessons { get; set; }
     }

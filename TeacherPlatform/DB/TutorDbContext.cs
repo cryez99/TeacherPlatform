@@ -31,12 +31,6 @@ namespace TeacherPlatform.DB
                 .HasForeignKey(l => l.StudyPlanId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-           modelBuilder.Entity<StudyPlan>()
-               .HasMany(sp => sp.Students)
-               .WithOne(s => s.StudyPlan)
-               .HasForeignKey(s => s.StudyPlanId)
-               .OnDelete(DeleteBehavior.SetNull);
-
             modelBuilder.Entity<StudyPlan>()
                 .HasMany(sp => sp.Topics)
                 .WithOne(t => t.StudyPlan)

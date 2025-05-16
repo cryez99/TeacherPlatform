@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="TeacherPlatform.Models.ChangePasswordViewModel">
+    <Position X="0.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAABAAAAIAA=</HashCode>
+      <FileName>Models\ChangePasswordViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.DashboardViewModel">
+    <Position X="2.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAAAEAAABAAAQAAAAAAAAACQCAAAAAAA=</HashCode>
+      <FileName>Models\DashboardViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.ErrorViewModel">
+    <Position X="4.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAIAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\ErrorViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.ForgotPasswordViewModel">
+    <Position X="6" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\ForgotPasswordViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.LessonEditModel">
+    <Position X="7.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAgAEAAAAAAAAAAIAAgAAAAAAAAAAACAAA=</HashCode>
+      <FileName>Models\LessonEditModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.LoginViewModel">
+    <Position X="9.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAA=</HashCode>
+      <FileName>Models\LoginViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.ProfileViewModel">
+    <Position X="0.75" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAIAAACAAAAgAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\ProfileViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.RegisterViewModel">
+    <Position X="4.25" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAIAAAAAAAAAAAAAAAAACAAAAAAAAIAA=</HashCode>
+      <FileName>Models\RegisterViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.StudentEditModel">
+    <Position X="6" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAACAAAIAAAAIAAAAAAAAAAAAAAAAAIAACAAA=</HashCode>
+      <FileName>Models\StudentEditModels.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.StudyPlanCreateModel">
+    <Position X="9.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIABAAAAQAAEAQAAAAAAAAAAACAAgAAAAAAEAAAAA=</HashCode>
+      <FileName>Models\StudyPlanCreateModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.StudyPlanEditModel">
+    <Position X="2.5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAAAAAAEAAAAAAAQAAAAAAAAAAAAAAAAAACAA=</HashCode>
+      <FileName>Models\StudyPlanEditModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.StudentSelection">
+    <Position X="6" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAEIAAAAAAAAAAAAAAAAAAAAAAAAACAAA=</HashCode>
+      <FileName>Models\StudyPlanEditModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.TopicSelection">
+    <Position X="7.75" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAEEAAAAAAAAACAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\StudyPlanEditModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TeacherPlatform.Models.SubTopicSelection">
+    <Position X="4.25" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAIAAAAAAAAAA=</HashCode>
+      <FileName>Models\StudyPlanEditModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

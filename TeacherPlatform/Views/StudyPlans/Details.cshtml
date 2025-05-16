@@ -39,19 +39,25 @@
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-header bg-primary text-white">
-                <i class="bi bi-people"></i> Ученики (@Model.Students.Count)
+                <i class="bi bi-people"></i> Ученики (@(Model.Lessons?.Select(l => l.Student)?.Distinct()?.Count() ?? 0)
             </div>
             <div class="card-body p-0">
                 <ul class="list-group list-group-flush">
-                    @foreach (var student in Model.Students.OrderBy(s => s.FullName))
+                    @foreach (var student in Model.Lessons?
+                    .Select(l => l.Student)?
+                    .Distinct()?
+                    .OrderBy(s => s?.FullName) ?? Enumerable.Empty<Student>())
                     {
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            @student.FullName
-                            <a asp-controller="Students" asp-action="Index" asp-route-id="@student.StudentId"
-                               class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                        </li>
+                        if (student != null)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                @student.FullName
+                                <a asp-controller="Students" asp-action="Index" asp-route-id="@student.StudentId"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </li>
+                        }
                     }
                 </ul>
             </div>

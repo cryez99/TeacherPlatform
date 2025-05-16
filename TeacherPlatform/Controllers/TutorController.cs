@@ -19,20 +19,16 @@ namespace TeacherPlatform.Controllers
 
         public IActionResult Dashboard()
         {
-            // Получаем ID текущего пользователя из claims
             var tutorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-            // Получаем текущую дату в UTC
             var todayUtc = DateTime.UtcNow.Date;
             var nowUtc = DateTime.UtcNow;
 
-            // Получаем список ID студентов текущего преподавателя
             var studentIds = _context.Students
                 .Where(s => s.TutorId == tutorId)
                 .Select(s => s.StudentId)
                 .ToList();
 
-            // Получаем данные для дашборда
             var model = new DashboardViewModel
             {
                 TutorName = _context.Users
@@ -49,7 +45,7 @@ namespace TeacherPlatform.Controllers
                     .Count(l => studentIds.Contains(l.StudentId) && l.Status == "Completed"),
 
                 StudyPlansCount = _context.StudyPlans
-                    .Count(p => p.Students.Any(s => s.TutorId == tutorId)),
+                    .Count(p => p.Lessons.Any(l => l.Student.TutorId == tutorId)),
 
                 TodaysLessonsCount = _context.Lessons
                     .Count(l => l.StartTime >= todayUtc &&

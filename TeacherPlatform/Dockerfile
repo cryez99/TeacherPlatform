@@ -1,29 +1,33 @@
-# См. статью по ссылке https://aka.ms/customizecontainer, чтобы узнать как настроить контейнер отладки и как Visual Studio использует этот Dockerfile для создания образов для ускорения отладки.
-
-# Этот этап используется при запуске из VS в быстром режиме (по умолчанию для конфигурации отладки)
+# Базовый образ для runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-
-# Этот этап используется для сборки проекта службы
+# Этап сборки
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+
+# Установка EF Core tools
+RUN dotnet tool install --global dotnet-ef --version 8.0.*
+
+# Копируем ТОЛЬКО файлы проектов сначала
 COPY ["TeacherPlatform/TeacherPlatform.csproj", "TeacherPlatform/"]
-RUN dotnet restore "./TeacherPlatform/TeacherPlatform.csproj"
+COPY ["TeacherPlatform.sln", "."]
+RUN dotnet restore "TeacherPlatform/TeacherPlatform.csproj"
+
+# 2. Копируем остальные файлы
 COPY . .
 WORKDIR "/src/TeacherPlatform"
-RUN dotnet build "./TeacherPlatform.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "TeacherPlatform.csproj" -c Release -o /app/build
 
-# Этот этап используется для публикации проекта службы, который будет скопирован на последний этап
+# Этап публикации
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./TeacherPlatform.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "TeacherPlatform.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Этот этап используется в рабочей среде или при запуске из VS в обычном режиме (по умолчанию, когда конфигурация отладки не используется)
+# Финальный образ
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .

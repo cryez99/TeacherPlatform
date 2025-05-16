@@ -1,10 +1,15 @@
 ﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using DocumentFormat.OpenXml;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using TeacherPlatform.DB;
 using TeacherPlatform.Models;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System;
+using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace TeacherPlatform.Services
 {
@@ -22,30 +27,30 @@ namespace TeacherPlatform.Services
         public async Task<List<StudyPlan>> GetStudyPlansByTutorAsync(int tutorId)
         {
             return await _db.StudyPlans
-                .Include(sp => sp.Students)
-                    .ThenInclude(s => s.Tutor)
-                .Include(sp => sp.Topics)
                 .Include(sp => sp.Lessons)
-                .Where(sp => sp.Students.Any(s => s.TutorId == tutorId))
+                    .ThenInclude(l => l.Student)
+                        .ThenInclude(s => s.Tutor)
+                .Include(sp => sp.Topics)
+                    .ThenInclude(t => t.SubTopics)
+                .Where(sp => sp.Lessons.Any(l => l.Student.TutorId == tutorId))
                 .OrderByDescending(sp => sp.CreatedAt)
                 .ToListAsync();
         }
 
         public async Task<StudyPlan> CreateStudyPlanAsync(
-         string title,
-         int lessonsPerWeek,
-         int lessonDurationMinutes,
-         DateTime startDate,
-         TimeSpan lessonStartTime,
-         List<DayOfWeek> selectedDays,
-         List<int> studentIds,
-         List<int> topicIds)
+            string title,
+            int lessonsPerWeek,
+            int lessonDurationMinutes,
+            DateTime startDate,
+            TimeSpan lessonStartTime,
+            List<DayOfWeek> selectedDays,
+            List<int> studentIds,
+            List<int> topicIds)
         {
             using var transaction = await _db.Database.BeginTransactionAsync();
 
             try
             {
-                // 1. Получаем студентов и темы до создания плана
                 var students = await _db.Students
                     .Where(s => studentIds.Contains(s.StudentId))
                     .ToListAsync();
@@ -55,7 +60,6 @@ namespace TeacherPlatform.Services
                     .Include(t => t.SubTopics)
                     .ToListAsync();
 
-                // 2. Создаем план
                 var plan = new StudyPlan
                 {
                     Title = title,
@@ -63,21 +67,13 @@ namespace TeacherPlatform.Services
                     LessonDurationMinutes = lessonDurationMinutes,
                     StartDate = startDate,
                     CreatedAt = DateTime.UtcNow,
-                    Students = students,
                     Topics = topics
                 };
 
                 await _db.StudyPlans.AddAsync(plan);
                 await _db.SaveChangesAsync();
 
-                // 3. Генерируем уроки после создания плана и привязки студентов/тем
-                var lessons = GenerateLessons(plan, selectedDays, lessonStartTime);
-
-                // Добавляем привязку к учебному плану для каждого урока
-                foreach (var lesson in lessons)
-                {
-                    lesson.StudyPlanId = plan.StudyPlanId;
-                }
+                var lessons = GenerateLessons(plan, selectedDays, lessonStartTime, students);
 
                 await _db.Lessons.AddRangeAsync(lessons);
                 await _db.SaveChangesAsync();
@@ -93,10 +89,10 @@ namespace TeacherPlatform.Services
             }
         }
 
-        private List<Lesson> GenerateLessons(StudyPlan plan, List<DayOfWeek> selectedDays, TimeSpan startTime)
+        private List<Lesson> GenerateLessons(StudyPlan plan, List<DayOfWeek> selectedDays, TimeSpan startTime, List<Student> students)
         {
             var lessons = new List<Lesson>();
-            if (plan.Students == null || !plan.Students.Any() || plan.Topics == null || !plan.Topics.Any())
+            if (!students.Any() || plan.Topics == null || !plan.Topics.Any())
             {
                 return lessons;
             }
@@ -105,7 +101,6 @@ namespace TeacherPlatform.Services
             var sortedDays = selectedDays.OrderBy(d => (int)d).ToList();
             int currentDayIndex = 0;
 
-            // Находим первую подходящую дату
             currentDate = GetNextLessonDate(currentDate, sortedDays, ref currentDayIndex);
 
             var allSubTopics = plan.Topics
@@ -113,11 +108,10 @@ namespace TeacherPlatform.Services
                 .SelectMany(t => t.SubTopics.OrderBy(st => st.Order))
                 .ToList();
 
-            foreach (var student in plan.Students)
+            foreach (var student in students)
             {
                 foreach (var subTopic in allSubTopics)
                 {
-                    // Первое занятие по подтеме
                     var startDateTime = new DateTime(
                         currentDate.Year,
                         currentDate.Month,
@@ -133,15 +127,13 @@ namespace TeacherPlatform.Services
                         StartTime = startDateTime,
                         EndTime = startDateTime.AddMinutes(plan.LessonDurationMinutes),
                         StudentId = student.StudentId,
-                        Status = "Planned",
-                        StudyPlanId = plan.StudyPlanId
+                        StudyPlanId = plan.StudyPlanId,
+                        Status = "Planned"
                     });
 
-                    // Переходим к следующему выбранному дню
                     currentDayIndex = (currentDayIndex + 1) % sortedDays.Count;
                     currentDate = GetNextLessonDate(currentDate.AddDays(1), sortedDays, ref currentDayIndex);
 
-                    // Второе занятие по подтеме
                     startDateTime = new DateTime(
                         currentDate.Year,
                         currentDate.Month,
@@ -157,11 +149,10 @@ namespace TeacherPlatform.Services
                         StartTime = startDateTime,
                         EndTime = startDateTime.AddMinutes(plan.LessonDurationMinutes),
                         StudentId = student.StudentId,
-                        Status = "Planned",
-                        StudyPlanId = plan.StudyPlanId
+                        StudyPlanId = plan.StudyPlanId,
+                        Status = "Planned"
                     });
 
-                    // Переходим к следующему выбранному дню для следующей подтемы
                     currentDayIndex = (currentDayIndex + 1) % sortedDays.Count;
                     currentDate = GetNextLessonDate(currentDate.AddDays(1), sortedDays, ref currentDayIndex);
                 }
@@ -172,13 +163,11 @@ namespace TeacherPlatform.Services
 
         private DateTime GetNextLessonDate(DateTime currentDate, List<DayOfWeek> lessonDays, ref int currentDayIndex)
         {
-            // Находим следующий выбранный день недели
             while (!lessonDays.Contains(currentDate.DayOfWeek))
             {
                 currentDate = currentDate.AddDays(1);
             }
 
-            // Обновляем индекс текущего дня
             currentDayIndex = lessonDays.IndexOf(currentDate.DayOfWeek);
             return currentDate;
         }
@@ -186,7 +175,8 @@ namespace TeacherPlatform.Services
         public async Task<StudyPlanEditModel> GetStudyPlanForEditAsync(int planId)
         {
             var plan = await _db.StudyPlans
-                .Include(sp => sp.Students)
+                .Include(sp => sp.Lessons)
+                    .ThenInclude(l => l.Student)
                 .Include(sp => sp.Topics)
                     .ThenInclude(t => t.SubTopics)
                 .FirstOrDefaultAsync(sp => sp.StudyPlanId == planId);
@@ -204,7 +194,7 @@ namespace TeacherPlatform.Services
                 {
                     StudentId = s.StudentId,
                     FullName = s.FullName,
-                    IsSelected = plan.Students.Any(ps => ps.StudentId == s.StudentId)
+                    IsSelected = plan.Lessons.Any(l => l.StudentId == s.StudentId)
                 }).ToList(),
                 AvailableTopics = allTopics.Select(t => new TopicSelection
                 {
@@ -229,20 +219,13 @@ namespace TeacherPlatform.Services
             try
             {
                 var plan = await _db.StudyPlans
-                    .Include(sp => sp.Students)
+                    .Include(sp => sp.Lessons)
+                        .ThenInclude(l => l.Student)
                     .Include(sp => sp.Topics)
                         .ThenInclude(t => t.SubTopics)
-                    .Include(sp => sp.Lessons)
                     .FirstOrDefaultAsync(sp => sp.StudyPlanId == model.StudyPlanId);
 
                 if (plan == null) throw new Exception("Учебный план не найден");
-
-                // Сохраняем предыдущие темы для сравнения
-                var oldTopicIds = plan.Topics.Select(t => t.TopicId).ToList();
-                var newTopicIds = model.AvailableTopics
-                    .Where(t => t.IsSelected)
-                    .Select(t => t.TopicId)
-                    .ToList();
 
                 // Обновление названия
                 plan.Title = model.Title;
@@ -253,25 +236,21 @@ namespace TeacherPlatform.Services
                     .Select(s => s.StudentId)
                     .ToList();
 
-                var newStudentId = selectedStudentIds.FirstOrDefault();
-                var oldStudentId = plan.Students.FirstOrDefault()?.StudentId;
+                // Удаляем уроки для студентов, которые больше не выбраны
+                var lessonsToRemove = plan.Lessons
+                    .Where(l => !selectedStudentIds.Contains(l.StudentId))
+                    .ToList();
 
-                // Обновляем ученика в плане
-                foreach (var student in plan.Students.ToList())
-                {
-                    student.StudyPlanId = null;
-                }
-
-                if (newStudentId != 0)
-                {
-                    var newStudent = await _db.Students.FindAsync(newStudentId);
-                    if (newStudent != null)
-                    {
-                        newStudent.StudyPlanId = plan.StudyPlanId;
-                    }
-                }
+                _db.Lessons.RemoveRange(lessonsToRemove);
 
                 // Обновление тем
+                var oldTopicIds = plan.Topics.Select(t => t.TopicId).ToList();
+                var newTopicIds = model.AvailableTopics
+                    .Where(t => t.IsSelected)
+                    .Select(t => t.TopicId)
+                    .ToList();
+
+                // Удаляем невыбранные темы
                 foreach (var topic in plan.Topics.ToList())
                 {
                     if (!newTopicIds.Contains(topic.TopicId))
@@ -280,9 +259,9 @@ namespace TeacherPlatform.Services
                     }
                 }
 
+                // Добавляем новые темы
                 var topicsToAdd = await _db.Topics
-                    .Where(t => newTopicIds.Contains(t.TopicId) &&
-                               !oldTopicIds.Contains(t.TopicId))
+                    .Where(t => newTopicIds.Contains(t.TopicId) && !oldTopicIds.Contains(t.TopicId))
                     .Include(t => t.SubTopics)
                     .ToListAsync();
 
@@ -293,10 +272,9 @@ namespace TeacherPlatform.Services
 
                 await _db.SaveChangesAsync();
 
-                // Генерируем уроки для новых тем, если они есть
-                if (topicsToAdd.Any())
+                // Генерируем уроки для новых тем и студентов
+                if (topicsToAdd.Any() || selectedStudentIds.Any())
                 {
-                    // Получаем параметры плана для генерации уроков
                     var selectedDays = plan.Lessons
                         .Select(l => l.StartTime.DayOfWeek)
                         .Distinct()
@@ -304,14 +282,11 @@ namespace TeacherPlatform.Services
 
                     var startTime = plan.Lessons.FirstOrDefault()?.StartTime.TimeOfDay ?? new TimeSpan(16, 0, 0);
 
-                    // Генерируем уроки только для новых тем
-                    var lessonsForNewTopics = GenerateLessonsForTopics(plan, topicsToAdd, selectedDays, startTime);
+                    var students = await _db.Students
+                        .Where(s => selectedStudentIds.Contains(s.StudentId))
+                        .ToListAsync();
 
-                    foreach (var lesson in lessonsForNewTopics)
-                    {
-                        lesson.StudentId = newStudentId; // Используем текущего ученика
-                        lesson.StudyPlanId = plan.StudyPlanId;
-                    }
+                    var lessonsForNewTopics = GenerateLessonsForTopics(plan, topicsToAdd, selectedDays, startTime, students);
 
                     await _db.Lessons.AddRangeAsync(lessonsForNewTopics);
                     await _db.SaveChangesAsync();
@@ -327,24 +302,22 @@ namespace TeacherPlatform.Services
             }
         }
 
-        private List<Lesson> GenerateLessonsForTopics(StudyPlan plan, List<Topic> newTopics, List<DayOfWeek> selectedDays, TimeSpan startTime)
+        private List<Lesson> GenerateLessonsForTopics(StudyPlan plan, List<Topic> newTopics, List<DayOfWeek> selectedDays, TimeSpan startTime, List<Student> students)
         {
             var lessons = new List<Lesson>();
-            if (plan.Students == null || !plan.Students.Any() || newTopics == null || !newTopics.Any())
+            if (!students.Any() || newTopics == null || !newTopics.Any())
             {
                 return lessons;
             }
 
-            // Находим последнюю дату из существующих уроков
             var lastLessonDate = plan.Lessons
                 .OrderByDescending(l => l.StartTime)
                 .FirstOrDefault()?.StartTime.Date ?? plan.StartDate;
 
-            var currentDate = lastLessonDate.AddDays(1); // Начинаем со следующего дня после последнего урока
+            var currentDate = lastLessonDate.AddDays(1);
             var sortedDays = selectedDays.OrderBy(d => (int)d).ToList();
             int currentDayIndex = 0;
 
-            // Находим первую подходящую дату
             currentDate = GetNextLessonDate(currentDate, sortedDays, ref currentDayIndex);
 
             var allNewSubTopics = newTopics
@@ -352,11 +325,10 @@ namespace TeacherPlatform.Services
                 .SelectMany(t => t.SubTopics.OrderBy(st => st.Order))
                 .ToList();
 
-            foreach (var student in plan.Students)
+            foreach (var student in students)
             {
                 foreach (var subTopic in allNewSubTopics)
                 {
-                    // Первое занятие по подтеме
                     var startDateTime = new DateTime(
                         currentDate.Year,
                         currentDate.Month,
@@ -372,16 +344,14 @@ namespace TeacherPlatform.Services
                         StartTime = startDateTime,
                         EndTime = startDateTime.AddMinutes(plan.LessonDurationMinutes),
                         StudentId = student.StudentId,
-                        Status = "Planned",
-                        StudyPlanId = plan.StudyPlanId
+                        StudyPlanId = plan.StudyPlanId,
+                        Status = "Planned"
                     });
 
-                    // Переходим к следующему дню
                     currentDayIndex = (currentDayIndex + 1) % sortedDays.Count;
                     currentDate = currentDate.AddDays(1);
                     currentDate = GetNextLessonDate(currentDate, sortedDays, ref currentDayIndex);
 
-                    // Второе занятие по подтеме
                     startDateTime = new DateTime(
                         currentDate.Year,
                         currentDate.Month,
@@ -397,11 +367,10 @@ namespace TeacherPlatform.Services
                         StartTime = startDateTime,
                         EndTime = startDateTime.AddMinutes(plan.LessonDurationMinutes),
                         StudentId = student.StudentId,
-                        Status = "Planned",
-                        StudyPlanId = plan.StudyPlanId
+                        StudyPlanId = plan.StudyPlanId,
+                        Status = "Planned"
                     });
 
-                    // Переходим к следующему дню для следующей подтемы
                     currentDayIndex = (currentDayIndex + 1) % sortedDays.Count;
                     currentDate = currentDate.AddDays(1);
                 }
@@ -416,12 +385,10 @@ namespace TeacherPlatform.Services
             {
                 using (var wordDocument = WordprocessingDocument.Create(memoryStream, WordprocessingDocumentType.Document))
                 {
-                    // Основная часть документа
                     var mainPart = wordDocument.AddMainDocumentPart();
                     mainPart.Document = new Document();
                     var body = mainPart.Document.AppendChild(new Body());
 
-                    // Настройки страницы
                     var sectionProps = new SectionProperties(
                         new PageMargin()
                         {
@@ -434,7 +401,6 @@ namespace TeacherPlatform.Services
                         });
                     body.AppendChild(sectionProps);
 
-                    // Заголовок отчета
                     var title = new Paragraph(
                         new Run(
                             new Text($"Отчет по учебным планам ({DateTime.Now:dd.MM.yyyy})")
@@ -446,10 +412,7 @@ namespace TeacherPlatform.Services
                     );
                     body.AppendChild(title);
 
-                    // Таблица с планами
                     var table = new Table();
-
-                    // Стили таблицы
                     var tableProperties = new TableProperties(
                         new TableWidth() { Width = "100%", Type = TableWidthUnitValues.Pct },
                         new TableBorders(
@@ -464,7 +427,6 @@ namespace TeacherPlatform.Services
                     );
                     table.AppendChild(tableProperties);
 
-                    // Заголовки таблицы
                     var headerRow = new TableRow();
                     string[] headers = { "Название", "Дата начала", "Уроков/неделю", "Длительность", "Ученик", "Темы" };
                     int[] columnWidths = { 25, 15, 15, 15, 20, 10 };
@@ -484,29 +446,25 @@ namespace TeacherPlatform.Services
                     }
                     table.AppendChild(headerRow);
 
-                    // Данные планов
                     foreach (var plan in studyPlans.OrderBy(p => p.StartDate))
                     {
                         var row = new TableRow();
 
-                        // Название
                         row.AppendChild(CreateTableCell(plan.Title, columnWidths[0]));
-
-                        // Дата начала
                         row.AppendChild(CreateTableCell(plan.StartDate.ToString("d"), columnWidths[1]));
-
-                        // Уроков в неделю
                         row.AppendChild(CreateTableCell(plan.LessonsPerWeek.ToString(), columnWidths[2]));
-
-                        // Длительность
                         row.AppendChild(CreateTableCell($"{plan.LessonDurationMinutes} мин.", columnWidths[3]));
 
-                        // Ученик
+                        var studentNames = plan.Lessons
+                            .Select(l => l.Student?.FullName)
+                            .Distinct()
+                            .Where(name => !string.IsNullOrEmpty(name))
+                            .ToList();
+
                         row.AppendChild(CreateTableCell(
-                            plan.Students.Any() ? plan.Students.First().FullName : "Не указан",
+                            studentNames.Any() ? string.Join(", ", studentNames) : "Не указан",
                             columnWidths[4]));
 
-                        // Темы (количество)
                         row.AppendChild(CreateTableCell(plan.Topics.Count.ToString(), columnWidths[5]));
 
                         table.AppendChild(row);
@@ -514,7 +472,6 @@ namespace TeacherPlatform.Services
 
                     body.AppendChild(table);
 
-                    // Добавим статистику в конце
                     var stats = new Paragraph(
                         new Run(
                             new Text($"Всего планов: {studyPlans.Count}, " +

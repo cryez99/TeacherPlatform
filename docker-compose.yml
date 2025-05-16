@@ -1,0 +1,30 @@
+services:
+  teacherplatform:
+    env_file: .env
+    build:
+      context: .
+      dockerfile: TeacherPlatform/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ConnectionStrings__TutorDbContext=${ConnectionStrings__TutorDbContext}
+      - ASPNETCORE_DATA_PROTECTION__KEYS__PATH=${ASPNETCORE_DATA_PROTECTION__KEYS__PATH}
+    volumes:
+      - data_protection_keys:${ASPNETCORE_DATA_PROTECTION__KEYS__PATH}
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15
+    env_file: .env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+  data_protection_keys:

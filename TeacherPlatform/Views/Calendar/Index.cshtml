@@ -3,10 +3,6 @@
 @{
     ViewData["Title"] = "Календарь занятий";
 
-    // Отладочная информация
-    var debugInfo = $"Всего уроков: {Model.Count}, StudentIds: " +
-                   string.Join(", ", Model.Select(l => l.Student?.StudentId).Distinct());
-
     // Получаем всех уникальных учеников (исключаем null)
     var students = Model.Where(l => l.Student != null)
                       .Select(l => l.Student)

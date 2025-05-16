@@ -41,9 +41,6 @@ namespace TeacherPlatform.Models
         [Display(Name = "Дата создания")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        [Display(Name = "Ученики")]
-        public ICollection<Student> Students { get; set; } = new List<Student>();
-
         [Display(Name = "Темы")]
         public ICollection<Topic> Topics { get; set; } = new List<Topic>();
 

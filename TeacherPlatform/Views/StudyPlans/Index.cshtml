@@ -25,17 +25,20 @@
                     {
                         <div class="list-group-item border-0 py-3">
                             <div class="d-flex justify-content-between align-items-center">
-                                <div class="w-75">
-                                    <h5 class="mb-1">@plan.Title</h5>
-                                    <div class="d-flex flex-wrap gap-3 text-muted small">
-                                        <span><i class="bi bi-calendar"></i> Начало: @plan.StartDate.ToString("d")</span>
-                                        <span><i class="bi bi-book"></i> Уроков: @plan.LessonsPerWeek/неделю</span>
-                                        @if (plan.Students.Any())
-                                        {
-                                            <span><i class="bi bi-person"></i> Ученик: @plan.Students.First().FullName</span>
-                                        }
-                                        <span><i class="bi bi-list-check"></i> Тем: @plan.Topics.Count</span>
-                                    </div>
+                                <div class="d-flex flex-wrap gap-3 text-muted small">
+                                    <span><i class="bi bi-calendar"></i> Начало: @plan.StartDate.ToString("d")</span>
+                                    <span><i class="bi bi-book"></i> Уроков: @plan.LessonsPerWeek/неделю</span>
+                                    @{
+                                        var students = plan.Lessons?
+                                        .Select(l => l.Student)?
+                                        .Distinct()?
+                                        .ToList();
+                                    }
+                                    @if (students?.Any() == true)
+                                    {
+                                        <span><i class="bi bi-person"></i> Ученик: @students.First().FullName</span>
+                                    }
+                                    <span><i class="bi bi-list-check"></i> Тем: @plan.Topics.Count</span>
                                 </div>
                                 <div>
                                     <a asp-action="Details" asp-route-id="@plan.StudyPlanId"

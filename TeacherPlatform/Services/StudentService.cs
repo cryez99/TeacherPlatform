@@ -39,7 +39,7 @@ namespace TeacherPlatform.Services
                 .ToListAsync();
         }
 
-        public async System.Threading.Tasks.Task CreateStudent(Student student)
+        public async Task CreateStudent(Student student)
         {
             if (student == null || string.IsNullOrEmpty(student.FullName))
                 throw new ArgumentException("Неверные данные ученика");
@@ -49,7 +49,7 @@ namespace TeacherPlatform.Services
             await _db.SaveChangesAsync();
         }
 
-        public async System.Threading.Tasks.Task UpdateStudent(int studentId, int tutorId, StudentEditModel model)
+        public async Task UpdateStudent(int studentId, int tutorId, StudentEditModel model)
         {
             var student = await _db.Students
                 .FirstOrDefaultAsync(s => s.StudentId == studentId && s.TutorId == tutorId);
@@ -66,7 +66,7 @@ namespace TeacherPlatform.Services
             await _db.SaveChangesAsync();
         }
 
-        public async System.Threading.Tasks.Task DeleteStudent(int id, int tutorId)
+        public async Task DeleteStudent(int id, int tutorId)
         {
             var student = await _db.Students
                 .FirstOrDefaultAsync(s => s.StudentId == id && s.TutorId == tutorId);
@@ -88,25 +88,22 @@ namespace TeacherPlatform.Services
             {
                 using (var wordDocument = WordprocessingDocument.Create(memoryStream, WordprocessingDocumentType.Document))
                 {
-                    // Основная часть документа
                     var mainPart = wordDocument.AddMainDocumentPart();
                     mainPart.Document = new Document();
                     var body = mainPart.Document.AppendChild(new Body());
 
-                    // Настройки страницы (поля)
                     var sectionProps = new SectionProperties(
                         new PageMargin()
                         {
-                            Top = 1000,  // 1 см сверху
-                            Right = 1000, // 1 см справа
-                            Bottom = 1000, // 1 см снизу
-                            Left = 1000,  // 1 см слева
+                            Top = 1000,  
+                            Right = 1000, 
+                            Bottom = 1000,
+                            Left = 1000,
                             Header = 500,
                             Footer = 500
                         });
                     body.AppendChild(sectionProps);
 
-                    // Заголовок документа
                     var title = new Paragraph(
                         new Run(
                             new Text($"Отчет: Мои ученики ({DateTime.Now:dd.MM.yyyy})")
@@ -118,10 +115,8 @@ namespace TeacherPlatform.Services
                     );
                     body.AppendChild(title);
 
-                    // Таблица с данными
                     var table = new Table();
 
-                    // Стили таблицы - занимает 100% ширины
                     var tableProperties = new TableProperties(
                         new TableWidth() { Width = "100%", Type = TableWidthUnitValues.Pct },
                         new TableBorders(
@@ -136,11 +131,9 @@ namespace TeacherPlatform.Services
                     );
                     table.AppendChild(tableProperties);
 
-                    // Заголовки таблицы
                     var headerRow = new TableRow();
                     string[] headers = { "ФИО", "Класс", "Email", "Телефон", "Доп. информация" };
 
-                    // Ширина колонок (в процентах от ширины таблицы)
                     int[] columnWidths = { 30, 15, 20, 15, 20 };
 
                     for (int i = 0; i < headers.Length; i++)
@@ -162,12 +155,10 @@ namespace TeacherPlatform.Services
                     }
                     table.AppendChild(headerRow);
 
-                    // Данные учеников
                     foreach (var student in students)
                     {
                         var row = new TableRow();
 
-                        // Ячейки с теми же пропорциями ширины
                         row.AppendChild(CreateTableCell(student.FullName ?? "", columnWidths[0]));
                         row.AppendChild(CreateTableCell(student.Class ?? "", columnWidths[1]));
                         row.AppendChild(CreateTableCell(student.Email ?? "", columnWidths[2]));
@@ -195,7 +186,6 @@ namespace TeacherPlatform.Services
                 }
             ));
 
-            // Добавляем перенос слов
             var paragraph = new Paragraph(
                 new ParagraphProperties(
                     new Justification() { Val = JustificationValues.Left },

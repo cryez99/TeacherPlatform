@@ -103,18 +103,18 @@ namespace TeacherPlatform.Controllers
             var tutorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
             var plan = await _context.StudyPlans
-                .Include(sp => sp.Students)
+                .Include(sp => sp.Lessons)
+                    .ThenInclude(l => l.Student)
                 .Include(sp => sp.Topics)
                     .ThenInclude(t => t.SubTopics)
-                .Include(sp => sp.Lessons)
-                .FirstOrDefaultAsync(sp => sp.StudyPlanId == id);
+                .FirstOrDefaultAsync(sp => sp.StudyPlanId == id &&
+                                         sp.Lessons.Any(l => l.Student.TutorId == tutorId));
 
             if (plan == null)
             {
                 return NotFound();
             }
 
-            // Сортируем уроки по дате
             plan.Lessons = plan.Lessons
                 .OrderBy(l => l.StartTime)
                 .ToList();
@@ -128,9 +128,10 @@ namespace TeacherPlatform.Controllers
         {
             var tutorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var plan = await _context.StudyPlans
-                .Include(sp => sp.Students)
                 .Include(sp => sp.Lessons)
-                .FirstOrDefaultAsync(sp => sp.StudyPlanId == id && sp.Students.Any(s => s.TutorId == tutorId));
+                    .ThenInclude(l => l.Student)
+                .FirstOrDefaultAsync(sp => sp.StudyPlanId == id &&
+                                         sp.Lessons.Any(l => l.Student.TutorId == tutorId));
 
             if (plan == null)
             {
@@ -139,16 +140,10 @@ namespace TeacherPlatform.Controllers
 
             try
             {
-                // Отвязываем студентов от плана
-                foreach (var student in plan.Students)
-                {
-                    student.StudyPlanId = null;
-                }
-
                 // Удаляем все уроки плана
                 _context.Lessons.RemoveRange(plan.Lessons);
 
-                // Отвязываем темы (если нужно)
+                // Отвязываем темы
                 var topics = await _context.Topics
                     .Where(t => t.StudyPlanId == id)
                     .ToListAsync();
@@ -235,13 +230,13 @@ namespace TeacherPlatform.Controllers
         {
             var tutorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-            // Получаем учебные планы, связанные со студентами текущего преподавателя
+            // Получаем учебные планы через уроки, связанные со студентами текущего преподавателя
             var studyPlans = await _context.StudyPlans
-                .Include(sp => sp.Students)
+                .Include(sp => sp.Lessons)
+                    .ThenInclude(l => l.Student)
                 .Include(sp => sp.Topics)
                     .ThenInclude(t => t.SubTopics)
-                .Include(sp => sp.Lessons)
-                .Where(sp => sp.Students.Any(s => s.TutorId == tutorId))
+                .Where(sp => sp.Lessons.Any(l => l.Student.TutorId == tutorId))
                 .OrderByDescending(sp => sp.CreatedAt)
                 .ToListAsync();
 
