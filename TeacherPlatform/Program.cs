@@ -13,10 +13,18 @@ namespace TeacherPlatform
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? throw new ArgumentNullException("POSTGRES_HOST");
-            var connectionString = $"Server={dbHost};Port=5432;Database={Environment.GetEnvironmentVariable("POSTGRES_DATABASE")};" +
-                                  $"Username={Environment.GetEnvironmentVariable("POSTGRES_USERNAME")};" +
-                                  $"Password={Environment.GetEnvironmentVariable("POSTGRES_PASSWORD")};";
+            // Получаем конфигурацию из переменных Render
+            var config = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
+                .Build();
+
+            var connectionString = config["DATABASE_URL"]; // Render автоматически предоставляет эту переменную
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                // Для локальной разработки
+                connectionString = "Server=localhost;Port=5432;Database=TutorBD;User Id=postgres;Password=174Pasha;";
+            }
 
             builder.Services.AddDbContext<TutorDbContext>(options =>
                 options.UseNpgsql(connectionString, o => o.EnableRetryOnFailure()));
