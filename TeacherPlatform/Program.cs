@@ -50,12 +50,12 @@ namespace TeacherPlatform
 
             var app = builder.Build();
 
-            // Инициализация базы данных
-            using (var scope = app.Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<TutorDbContext>();
-                db.Database.EnsureCreated();
-            }
+            //// Инициализация базы данных
+            //using (var scope = app.Services.CreateScope())
+            //{
+            //    var db = scope.ServiceProvider.GetRequiredService<TutorDbContext>();
+            //    db.Database.EnsureCreated();
+            //}
 
             // Middleware pipeline
             if (!app.Environment.IsDevelopment())
