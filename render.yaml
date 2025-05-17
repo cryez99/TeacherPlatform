@@ -1,8 +1,8 @@
 databases:
   - name: teacherplatform-db
     plan: free
-    databaseName: TutorBD 
-    ipAllowList: []      
+    databaseName: TutorBD
+    ipAllowList: []
 
 services:
   - type: web
@@ -11,12 +11,12 @@ services:
     plan: free
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
-        value: Production  
+        value: Production
       - key: ConnectionStrings__TutorDbContext
-        value: postgres://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DATABASE}
+        value: Server=${POSTGRES_HOST};Port=5432;Database=${POSTGRES_DATABASE};User Id=${POSTGRES_USERNAME};Password=${POSTGRES_PASSWORD};
       - key: ASPNETCORE_DATA_PROTECTION__KEYS__PATH
         value: /app/keys
     disk:
-      name: data_keys      
+      name: data_keys
       mountPath: /app/keys
       sizeGB: 1

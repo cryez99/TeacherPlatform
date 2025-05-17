@@ -9,15 +9,16 @@ namespace TeacherPlatform
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // 1. Настройка базы данных
-            builder.Services.AddDbContext<TutorDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("TutorDbContext")));
+            var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__TutorDbContext")
+                ?? builder.Configuration.GetConnectionString("TutorDbContext");
 
-            // 3. Настройка аутентификации
+            builder.Services.AddDbContext<TutorDbContext>(options =>
+                options.UseNpgsql(connectionString, o => o.EnableRetryOnFailure()));
+
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
@@ -29,7 +30,6 @@ namespace TeacherPlatform
                     options.SlidingExpiration = true;
                 });
 
-            // 4. Сервисы приложения
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<StudentService>();
@@ -37,7 +37,6 @@ namespace TeacherPlatform
             builder.Services.AddScoped<TopicService>();
             builder.Services.AddScoped<StudyPlanService>();
 
-            // 5. Сессии
             builder.Services.AddSession(options =>
             {
                 options.Cookie.HttpOnly = true;
@@ -45,26 +44,21 @@ namespace TeacherPlatform
                 options.IdleTimeout = TimeSpan.FromMinutes(30);
             });
 
-            // 6. MVC
             builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
 
-            //// Инициализация базы данных
-            //using (var scope = app.Services.CreateScope())
-            //{
-            //    var db = scope.ServiceProvider.GetRequiredService<TutorDbContext>();
-            //    db.Database.EnsureCreated();
-            //}
-
-            // Middleware pipeline
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<TutorDbContext>();
+                await db.Database.MigrateAsync();
+            }
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
 
-            //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
 
