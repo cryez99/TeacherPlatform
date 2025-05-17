@@ -13,16 +13,9 @@ namespace TeacherPlatform
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // 1. Настройка базы данных (получаем строку подключения из переменных окружения)
-            var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST");
-            var dbName = Environment.GetEnvironmentVariable("POSTGRES_DATABASE");
-            var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USERNAME");
-            var dbPass = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
-
-            var connectionString = $"Server={dbHost};Port=5432;Database={dbName};Username={dbUser};Password={dbPass};";
-
+            // 1. Настройка базы данных
             builder.Services.AddDbContext<TutorDbContext>(options =>
-                options.UseNpgsql(connectionString));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("TutorDbContext")));
 
             // 3. Настройка аутентификации
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
