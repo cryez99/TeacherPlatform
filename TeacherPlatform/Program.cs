@@ -13,22 +13,11 @@ namespace TeacherPlatform
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Получаем конфигурацию из переменных Render
-            var config = new ConfigurationBuilder()
-                .AddEnvironmentVariables()
-                .Build();
-
-            var connectionString = config["DATABASE_URL"]; // Render автоматически предоставляет эту переменную
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                // Для локальной разработки
-                connectionString = "Server=localhost;Port=5432;Database=TutorBD;User Id=postgres;Password=174Pasha;";
-            }
-
+            // 1. Настройка базы данных
             builder.Services.AddDbContext<TutorDbContext>(options =>
-                options.UseNpgsql(connectionString, o => o.EnableRetryOnFailure()));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("TutorDbContext")));
 
+            // 3. Настройка аутентификации
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
@@ -40,6 +29,7 @@ namespace TeacherPlatform
                     options.SlidingExpiration = true;
                 });
 
+            // 4. Сервисы приложения
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<StudentService>();
@@ -47,6 +37,7 @@ namespace TeacherPlatform
             builder.Services.AddScoped<TopicService>();
             builder.Services.AddScoped<StudyPlanService>();
 
+            // 5. Сессии
             builder.Services.AddSession(options =>
             {
                 options.Cookie.HttpOnly = true;
@@ -54,16 +45,17 @@ namespace TeacherPlatform
                 options.IdleTimeout = TimeSpan.FromMinutes(30);
             });
 
+            // 6. MVC
             builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
 
-            //// Инициализация базы данных
-            //using (var scope = app.Services.CreateScope())
-            //{
-            //    var db = scope.ServiceProvider.GetRequiredService<TutorDbContext>();
-            //    db.Database.EnsureCreated();
-            //}
+            // Инициализация базы данных
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<TutorDbContext>();
+                db.Database.EnsureCreated();
+            }
 
             // Middleware pipeline
             if (!app.Environment.IsDevelopment())
@@ -72,6 +64,7 @@ namespace TeacherPlatform
                 app.UseHsts();
             }
 
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
 
