@@ -13,11 +13,14 @@ namespace TeacherPlatform
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // 1. Настройка базы данных
-            builder.Services.AddDbContext<TutorDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("TutorDbContext")));
+            var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? throw new ArgumentNullException("POSTGRES_HOST");
+            var connectionString = $"Server={dbHost};Port=5432;Database={Environment.GetEnvironmentVariable("POSTGRES_DATABASE")};" +
+                                  $"Username={Environment.GetEnvironmentVariable("POSTGRES_USERNAME")};" +
+                                  $"Password={Environment.GetEnvironmentVariable("POSTGRES_PASSWORD")};";
 
-            // 3. Настройка аутентификации
+            builder.Services.AddDbContext<TutorDbContext>(options =>
+                options.UseNpgsql(connectionString, o => o.EnableRetryOnFailure()));
+
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
@@ -29,7 +32,6 @@ namespace TeacherPlatform
                     options.SlidingExpiration = true;
                 });
 
-            // 4. Сервисы приложения
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<StudentService>();
@@ -37,7 +39,6 @@ namespace TeacherPlatform
             builder.Services.AddScoped<TopicService>();
             builder.Services.AddScoped<StudyPlanService>();
 
-            // 5. Сессии
             builder.Services.AddSession(options =>
             {
                 options.Cookie.HttpOnly = true;
@@ -45,7 +46,6 @@ namespace TeacherPlatform
                 options.IdleTimeout = TimeSpan.FromMinutes(30);
             });
 
-            // 6. MVC
             builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
@@ -64,7 +64,6 @@ namespace TeacherPlatform
                 app.UseHsts();
             }
 
-            //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
 
