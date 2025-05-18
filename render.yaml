@@ -13,7 +13,7 @@ services:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: ConnectionStrings__TutorDbContext
-        value: Server=${POSTGRES_HOST};Port=5432;Database=${POSTGRES_DATABASE};User Id=${POSTGRES_USERNAME};Password=${POSTGRES_PASSWORD};
+        value: "Server=${POSTGRES_HOST};Port=5432;Database=${POSTGRES_DATABASE};Username=${POSTGRES_USERNAME};Password=${POSTGRES_PASSWORD};"
       - key: ASPNETCORE_DATA_PROTECTION__KEYS__PATH
         value: /app/keys
     disk:

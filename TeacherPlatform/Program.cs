@@ -13,8 +13,24 @@ namespace TeacherPlatform
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__TutorDbContext")
-                ?? builder.Configuration.GetConnectionString("TutorDbContext");
+            // Получаем строку подключения для Render
+            var renderDbUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+            string connectionString;
+            if (!string.IsNullOrEmpty(renderDbUrl))
+            {
+                // Парсинг URL формата Render (postgres://user:pass@host:port/db)
+                var uri = new Uri(renderDbUrl);
+                var userInfo = uri.UserInfo.Split(':');
+
+                connectionString = $"Server={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};" +
+                                 $"User Id={userInfo[0]};Password={userInfo[1]};";
+            }
+            else
+            {
+                // Для локальной разработки
+                connectionString = builder.Configuration.GetConnectionString("TutorDbContext");
+            }
 
             builder.Services.AddDbContext<TutorDbContext>(options =>
                 options.UseNpgsql(connectionString, o => o.EnableRetryOnFailure()));
@@ -48,10 +64,22 @@ namespace TeacherPlatform
 
             var app = builder.Build();
 
+            // Применяем миграции с обработкой ошибок
             using (var scope = app.Services.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<TutorDbContext>();
-                await db.Database.MigrateAsync();
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                try
+                {
+                    var db = scope.ServiceProvider.GetRequiredService<TutorDbContext>();
+                    logger.LogInformation("Applying migrations...");
+                    await db.Database.MigrateAsync();
+                    logger.LogInformation("Migrations applied successfully");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error applying migrations");
+                    throw; // Прерываем запуск при ошибке миграций
+                }
             }
             if (!app.Environment.IsDevelopment())
             {
