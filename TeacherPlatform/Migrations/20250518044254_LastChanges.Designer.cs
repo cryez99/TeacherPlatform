@@ -12,8 +12,8 @@ using TeacherPlatform.DB;
 namespace TeacherPlatform.Migrations
 {
     [DbContext(typeof(TutorDbContext))]
-    [Migration("20250517164704_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250518044254_LastChanges")]
+    partial class LastChanges
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -7,11 +7,28 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TeacherPlatform.Migrations
 {
     /// <inheritdoc />
-    public partial class F : Migration
+    public partial class LastChanges : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "study_plans",
+                columns: table => new
+                {
+                    study_plan_id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    title = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
+                    lessons_per_week = table.Column<int>(type: "integer", nullable: false),
+                    lesson_duration_minutes = table.Column<int>(type: "integer", nullable: false),
+                    start_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_study_plans", x => x.study_plan_id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "users",
                 columns: table => new
@@ -26,62 +43,6 @@ namespace TeacherPlatform.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_users", x => x.user_id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "study_plans",
-                columns: table => new
-                {
-                    study_plan_id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    title = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    tutor_id = table.Column<int>(type: "integer", nullable: false),
-                    lessons_per_week = table.Column<int>(type: "integer", nullable: false),
-                    lesson_duration_minutes = table.Column<int>(type: "integer", nullable: false),
-                    start_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_study_plans", x => x.study_plan_id);
-                    table.ForeignKey(
-                        name: "FK_study_plans_users_tutor_id",
-                        column: x => x.tutor_id,
-                        principalTable: "users",
-                        principalColumn: "user_id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "students",
-                columns: table => new
-                {
-                    student_id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    full_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    email = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    phone = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false),
-                    @class = table.Column<string>(name: "class", type: "varchar(20)", maxLength: 20, nullable: false),
-                    additional_info = table.Column<string>(type: "text", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    tutor_id = table.Column<int>(type: "integer", nullable: false),
-                    study_plan_id = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_students", x => x.student_id);
-                    table.ForeignKey(
-                        name: "FK_students_study_plans_study_plan_id",
-                        column: x => x.study_plan_id,
-                        principalTable: "study_plans",
-                        principalColumn: "study_plan_id",
-                        onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_students_users_tutor_id",
-                        column: x => x.tutor_id,
-                        principalTable: "users",
-                        principalColumn: "user_id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -102,6 +63,52 @@ namespace TeacherPlatform.Migrations
                         principalTable: "study_plans",
                         principalColumn: "study_plan_id",
                         onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "students",
+                columns: table => new
+                {
+                    student_id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    full_name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
+                    email = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true),
+                    phone = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: true),
+                    @class = table.Column<string>(name: "class", type: "varchar(20)", maxLength: 20, nullable: false),
+                    additional_info = table.Column<string>(type: "text", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    tutor_id = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_students", x => x.student_id);
+                    table.ForeignKey(
+                        name: "FK_students_users_tutor_id",
+                        column: x => x.tutor_id,
+                        principalTable: "users",
+                        principalColumn: "user_id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "sub_topics",
+                columns: table => new
+                {
+                    sub_topic_id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    title = table.Column<string>(type: "text", nullable: false),
+                    topic_id = table.Column<int>(type: "integer", nullable: false),
+                    order = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_sub_topics", x => x.sub_topic_id);
+                    table.ForeignKey(
+                        name: "FK_sub_topics_topics_topic_id",
+                        column: x => x.topic_id,
+                        principalTable: "topics",
+                        principalColumn: "topic_id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -163,27 +170,6 @@ namespace TeacherPlatform.Migrations
                         principalColumn: "topic_id");
                 });
 
-            migrationBuilder.CreateTable(
-                name: "sub_topics",
-                columns: table => new
-                {
-                    sub_topic_id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    title = table.Column<string>(type: "text", nullable: false),
-                    topic_id = table.Column<int>(type: "integer", nullable: false),
-                    order = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_sub_topics", x => x.sub_topic_id);
-                    table.ForeignKey(
-                        name: "FK_sub_topics_topics_topic_id",
-                        column: x => x.topic_id,
-                        principalTable: "topics",
-                        principalColumn: "topic_id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.CreateIndex(
                 name: "IX_lessons_start_time",
                 table: "lessons",
@@ -200,11 +186,6 @@ namespace TeacherPlatform.Migrations
                 column: "study_plan_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_lessons_UserId",
-                table: "lessons",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_progress_student_id",
                 table: "progress",
                 column: "student_id");
@@ -215,18 +196,8 @@ namespace TeacherPlatform.Migrations
                 column: "topic_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_students_study_plan_id",
-                table: "students",
-                column: "study_plan_id");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_students_tutor_id",
                 table: "students",
-                column: "tutor_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_study_plans_tutor_id",
-                table: "study_plans",
                 column: "tutor_id");
 
             migrationBuilder.CreateIndex(
@@ -259,10 +230,10 @@ namespace TeacherPlatform.Migrations
                 name: "topics");
 
             migrationBuilder.DropTable(
-                name: "study_plans");
+                name: "users");
 
             migrationBuilder.DropTable(
-                name: "users");
+                name: "study_plans");
         }
     }
 }
