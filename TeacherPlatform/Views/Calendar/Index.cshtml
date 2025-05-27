@@ -3,20 +3,15 @@
 @{
     ViewData["Title"] = "Календарь занятий";
 
-    // Получаем всех уникальных учеников (исключаем null)
     var students = Model.Where(l => l.Student != null)
                       .Select(l => l.Student)
                       .Distinct()
                       .OrderBy(s => s.FullName)
                       .ToList();
-
-    // Получаем выбранный studentId как строку
     var selectedStudentId = Context.Request.Query["studentId"].FirstOrDefault();
 
-    // Сортируем уроки по дате (основная сортировка)
     var filteredLessons = Model.OrderBy(l => l.StartTime).ToList();
 
-    // Применяем фильтр по ученику, если выбран
     if (!string.IsNullOrEmpty(selectedStudentId))
     {
         filteredLessons = filteredLessons
@@ -77,7 +72,7 @@
             <tr>
                 <td>@lesson.Title</td>
                 <td>@lesson.Student?.FullName</td>
-                <td>@lesson.StartTime.ToString("g") - @lesson.EndTime.ToString("t")</td>
+                <td>@lesson.StartTime.ToLocalTime().ToString("g") - @lesson.EndTime.ToLocalTime().ToString("t")</td>
                 <td>@lesson.Description</td>
                 <td>@lesson.GetLocalizedStatus()</td>
                 <td>

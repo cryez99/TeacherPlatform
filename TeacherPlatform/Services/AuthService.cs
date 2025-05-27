@@ -60,11 +60,9 @@ namespace TeacherPlatform.Services
             if (user == null)
                 throw new Exception("Пользователь не найден");
 
-            // Проверяем текущий пароль
             if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
                 return false;
 
-            // Хешируем новый пароль
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
             await _db.SaveChangesAsync();
 

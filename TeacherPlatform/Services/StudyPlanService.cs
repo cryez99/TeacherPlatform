@@ -38,57 +38,61 @@ namespace TeacherPlatform.Services
         }
 
         public async Task<StudyPlan> CreateStudyPlanAsync(
-            string title,
-            int lessonsPerWeek,
-            int lessonDurationMinutes,
-            DateTime startDate,
-            TimeSpan lessonStartTime,
-            List<DayOfWeek> selectedDays,
-            List<int> studentIds,
-            List<int> topicIds)
+         string title,
+         int lessonsPerWeek,
+         int lessonDurationMinutes,
+         DateTime startDate,
+         TimeSpan lessonStartTime,
+         List<DayOfWeek> selectedDays,
+         List<int> studentIds,
+         List<int> topicIds)
         {
-            using var transaction = await _db.Database.BeginTransactionAsync();
+            var executionStrategy = _db.Database.CreateExecutionStrategy();
 
-            try
+            return await executionStrategy.ExecuteAsync(async () =>
             {
-                var students = await _db.Students
-                    .Where(s => studentIds.Contains(s.StudentId))
-                    .ToListAsync();
+                using var transaction = await _db.Database.BeginTransactionAsync();
 
-                var topics = await _db.Topics
-                    .Where(t => topicIds.Contains(t.TopicId))
-                    .Include(t => t.SubTopics)
-                    .ToListAsync();
-
-                var plan = new StudyPlan
+                try
                 {
-                    Title = title,
-                    LessonsPerWeek = lessonsPerWeek,
-                    LessonDurationMinutes = lessonDurationMinutes,
-                    StartDate = startDate,
-                    CreatedAt = DateTime.UtcNow,
-                    Topics = topics
-                };
+                    var students = await _db.Students
+                        .Where(s => studentIds.Contains(s.StudentId))
+                        .ToListAsync();
 
-                await _db.StudyPlans.AddAsync(plan);
-                await _db.SaveChangesAsync();
+                    var topics = await _db.Topics
+                        .Where(t => topicIds.Contains(t.TopicId))
+                        .Include(t => t.SubTopics)
+                        .ToListAsync();
 
-                var lessons = GenerateLessons(plan, selectedDays, lessonStartTime, students);
+                    var plan = new StudyPlan
+                    {
+                        Title = title,
+                        LessonsPerWeek = lessonsPerWeek,
+                        LessonDurationMinutes = lessonDurationMinutes,
+                        StartDate = startDate,
+                        CreatedAt = DateTime.UtcNow,
+                        Topics = topics
+                    };
 
-                await _db.Lessons.AddRangeAsync(lessons);
-                await _db.SaveChangesAsync();
+                    await _db.StudyPlans.AddAsync(plan);
+                    await _db.SaveChangesAsync();
 
-                await transaction.CommitAsync();
-                return plan;
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Ошибка при создании плана");
-                throw;
-            }
+                    var lessons = GenerateLessons(plan, selectedDays, lessonStartTime, students);
+
+                    await _db.Lessons.AddRangeAsync(lessons);
+                    await _db.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+                    return plan;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Ошибка при создании плана");
+                    throw;
+                }
+            });
         }
-
         private List<Lesson> GenerateLessons(StudyPlan plan, List<DayOfWeek> selectedDays, TimeSpan startTime, List<Student> students)
         {
             var lessons = new List<Lesson>();
@@ -214,92 +218,97 @@ namespace TeacherPlatform.Services
 
         public async Task UpdateStudyPlanAsync(StudyPlanEditModel model)
         {
-            using var transaction = await _db.Database.BeginTransactionAsync();
+            var executionStrategy = _db.Database.CreateExecutionStrategy();
 
-            try
+            await executionStrategy.ExecuteAsync(async () =>
             {
-                var plan = await _db.StudyPlans
-                    .Include(sp => sp.Lessons)
-                        .ThenInclude(l => l.Student)
-                    .Include(sp => sp.Topics)
-                        .ThenInclude(t => t.SubTopics)
-                    .FirstOrDefaultAsync(sp => sp.StudyPlanId == model.StudyPlanId);
+                using var transaction = await _db.Database.BeginTransactionAsync();
 
-                if (plan == null) throw new Exception("Учебный план не найден");
-
-                // Обновление названия
-                plan.Title = model.Title;
-
-                // Обновление студентов
-                var selectedStudentIds = model.AvailableStudents
-                    .Where(s => s.IsSelected)
-                    .Select(s => s.StudentId)
-                    .ToList();
-
-                // Удаляем уроки для студентов, которые больше не выбраны
-                var lessonsToRemove = plan.Lessons
-                    .Where(l => !selectedStudentIds.Contains(l.StudentId))
-                    .ToList();
-
-                _db.Lessons.RemoveRange(lessonsToRemove);
-
-                // Обновление тем
-                var oldTopicIds = plan.Topics.Select(t => t.TopicId).ToList();
-                var newTopicIds = model.AvailableTopics
-                    .Where(t => t.IsSelected)
-                    .Select(t => t.TopicId)
-                    .ToList();
-
-                // Удаляем невыбранные темы
-                foreach (var topic in plan.Topics.ToList())
+                try
                 {
-                    if (!newTopicIds.Contains(topic.TopicId))
-                    {
-                        topic.StudyPlanId = null;
-                    }
-                }
+                    var plan = await _db.StudyPlans
+                        .Include(sp => sp.Lessons)
+                            .ThenInclude(l => l.Student)
+                        .Include(sp => sp.Topics)
+                            .ThenInclude(t => t.SubTopics)
+                        .FirstOrDefaultAsync(sp => sp.StudyPlanId == model.StudyPlanId);
 
-                // Добавляем новые темы
-                var topicsToAdd = await _db.Topics
-                    .Where(t => newTopicIds.Contains(t.TopicId) && !oldTopicIds.Contains(t.TopicId))
-                    .Include(t => t.SubTopics)
-                    .ToListAsync();
+                    if (plan == null) throw new Exception("Учебный план не найден");
 
-                foreach (var topic in topicsToAdd)
-                {
-                    topic.StudyPlanId = plan.StudyPlanId;
-                }
+                    // Обновление названия
+                    plan.Title = model.Title;
 
-                await _db.SaveChangesAsync();
-
-                // Генерируем уроки для новых тем и студентов
-                if (topicsToAdd.Any() || selectedStudentIds.Any())
-                {
-                    var selectedDays = plan.Lessons
-                        .Select(l => l.StartTime.DayOfWeek)
-                        .Distinct()
+                    // Обновление студентов
+                    var selectedStudentIds = model.AvailableStudents
+                        .Where(s => s.IsSelected)
+                        .Select(s => s.StudentId)
                         .ToList();
 
-                    var startTime = plan.Lessons.FirstOrDefault()?.StartTime.TimeOfDay ?? new TimeSpan(16, 0, 0);
+                    // Удаляем уроки для студентов, которые больше не выбраны
+                    var lessonsToRemove = plan.Lessons
+                        .Where(l => !selectedStudentIds.Contains(l.StudentId))
+                        .ToList();
 
-                    var students = await _db.Students
-                        .Where(s => selectedStudentIds.Contains(s.StudentId))
+                    _db.Lessons.RemoveRange(lessonsToRemove);
+
+                    // Обновление тем
+                    var oldTopicIds = plan.Topics.Select(t => t.TopicId).ToList();
+                    var newTopicIds = model.AvailableTopics
+                        .Where(t => t.IsSelected)
+                        .Select(t => t.TopicId)
+                        .ToList();
+
+                    // Удаляем невыбранные темы
+                    foreach (var topic in plan.Topics.ToList())
+                    {
+                        if (!newTopicIds.Contains(topic.TopicId))
+                        {
+                            topic.StudyPlanId = null;
+                        }
+                    }
+
+                    // Добавляем новые темы
+                    var topicsToAdd = await _db.Topics
+                        .Where(t => newTopicIds.Contains(t.TopicId) && !oldTopicIds.Contains(t.TopicId))
+                        .Include(t => t.SubTopics)
                         .ToListAsync();
 
-                    var lessonsForNewTopics = GenerateLessonsForTopics(plan, topicsToAdd, selectedDays, startTime, students);
+                    foreach (var topic in topicsToAdd)
+                    {
+                        topic.StudyPlanId = plan.StudyPlanId;
+                    }
 
-                    await _db.Lessons.AddRangeAsync(lessonsForNewTopics);
                     await _db.SaveChangesAsync();
-                }
 
-                await transaction.CommitAsync();
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Ошибка при обновлении учебного плана");
-                throw;
-            }
+                    // Генерируем уроки для новых тем и студентов
+                    if (topicsToAdd.Any() || selectedStudentIds.Any())
+                    {
+                        var selectedDays = plan.Lessons
+                            .Select(l => l.StartTime.DayOfWeek)
+                            .Distinct()
+                            .ToList();
+
+                        var startTime = plan.Lessons.FirstOrDefault()?.StartTime.TimeOfDay ?? new TimeSpan(16, 0, 0);
+
+                        var students = await _db.Students
+                            .Where(s => selectedStudentIds.Contains(s.StudentId))
+                            .ToListAsync();
+
+                        var lessonsForNewTopics = GenerateLessonsForTopics(plan, topicsToAdd, selectedDays, startTime, students);
+
+                        await _db.Lessons.AddRangeAsync(lessonsForNewTopics);
+                        await _db.SaveChangesAsync();
+                    }
+
+                    await transaction.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Ошибка при обновлении учебного плана");
+                    throw;
+                }
+            });
         }
 
         private List<Lesson> GenerateLessonsForTopics(StudyPlan plan, List<Topic> newTopics, List<DayOfWeek> selectedDays, TimeSpan startTime, List<Student> students)

@@ -13,14 +13,12 @@ namespace TeacherPlatform.Controllers
             _topicService = topicService;
         }
 
-        // GET: Список тем с подтемами
         public async Task<IActionResult> Index()
         {
             var topics = await _topicService.GetAllTopicsWithSubTopics();
             return View(topics);
         }
 
-        // POST: Создать тему
         [HttpPost]
         public async Task<IActionResult> Create(string title)
         {
@@ -28,7 +26,6 @@ namespace TeacherPlatform.Controllers
             return RedirectToAction("Index");
         }
 
-        // POST: Добавить подтему
         [HttpPost]
         public async Task<IActionResult> AddSubTopic(int topicId, string title)
         {

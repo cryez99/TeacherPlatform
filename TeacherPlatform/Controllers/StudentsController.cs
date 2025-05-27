@@ -37,6 +37,10 @@ namespace TeacherPlatform.Controllers
                 ModelState.AddModelError("FullName", "Имя обязательно");
                 return View(student);
             }
+            if (!int.TryParse(student.Class, out int classNumber) || classNumber < 1 || classNumber > 11)
+            {
+                ModelState.AddModelError("Class", "Класс должен быть от 1 до 11");
+            }
 
             try
             {

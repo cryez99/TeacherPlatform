@@ -41,8 +41,8 @@ namespace TeacherPlatform.Controllers
             ViewBag.Students = await _studentService.GetStudentsByTutor(tutorId);
             return View(new Lesson
             {
-                StartTime = DateTime.Now,
-                EndTime = DateTime.Now.AddHours(1)
+                StartTime = DateTime.UtcNow,
+                EndTime = DateTime.UtcNow.AddHours(1)
             });
         }
 
@@ -51,11 +51,21 @@ namespace TeacherPlatform.Controllers
         public async Task<IActionResult> Create(Lesson lesson)
         {
             if (string.IsNullOrEmpty(lesson.Title))
-                ModelState.AddModelError("Title", "Тема урока обязательна");
+                ModelState.AddModelError(nameof(Lesson.Title), "Тема урока обязательна");
 
             if (lesson.StudentId == 0)
-                ModelState.AddModelError("StudentId", "Выберите ученика");
+                ModelState.AddModelError(nameof(Lesson.StudentId), "Выберите ученика");
 
+            if (lesson.StartTime >= lesson.EndTime)
+            {
+                ModelState.AddModelError(nameof(Lesson.EndTime), "Время окончания должно быть позже времени начала");
+            }
+
+            if (!await _lessonService.IsTimeSlotAvailable(lesson.StudentId, lesson.StartTime, lesson.EndTime))
+            {
+                ModelState.AddModelError(nameof(Lesson.StartTime), "Это время уже занято другим уроком");
+                ModelState.AddModelError(nameof(Lesson.EndTime), ""); 
+            }
             if (!ModelState.IsValid)
             {
                 var tutorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -65,6 +75,8 @@ namespace TeacherPlatform.Controllers
 
             try
             {
+                lesson.StartTime = lesson.StartTime.ToUniversalTime();
+                lesson.EndTime = lesson.EndTime.ToUniversalTime();
                 lesson.Status = "Planned";
                 await _lessonService.CreateLesson(lesson);
                 TempData["SuccessMessage"] = "Урок успешно создан!";
@@ -72,7 +84,7 @@ namespace TeacherPlatform.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"Ошибка: {ex.Message}";
+                ModelState.AddModelError("", $"Ошибка при создании урока: {ex.Message}");
                 var tutorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 ViewBag.Students = await _studentService.GetStudentsByTutor(tutorId);
                 return View(lesson);
@@ -106,12 +118,29 @@ namespace TeacherPlatform.Controllers
                 ViewBag.Students = await _studentService.GetStudentsByTutor(tutorId);
                 return View(lesson);
             }
+            if (lesson.StartTime >= lesson.EndTime)
+            {
+                ModelState.AddModelError(nameof(Lesson.EndTime), "Время окончания должно быть позже времени начала");
+            }
+
+            if (!await _lessonService.IsTimeSlotAvailable(lesson.StudentId, lesson.StartTime, lesson.EndTime))
+            {
+                ModelState.AddModelError(nameof(Lesson.StartTime), "Это время уже занято другим уроком");
+                ModelState.AddModelError(nameof(Lesson.EndTime), "");
+            }
 
             try
             {
                 await _lessonService.UpdateLesson(id, lesson);
                 TempData["SuccessMessage"] = "Урок успешно обновлен!";
                 return RedirectToAction("Index");
+            }
+            catch (InvalidOperationException ex) 
+            {
+                ModelState.AddModelError("", ex.Message);
+                var tutorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                ViewBag.Students = await _studentService.GetStudentsByTutor(tutorId);
+                return View(lesson);
             }
             catch (Exception ex)
             {
@@ -144,13 +173,11 @@ namespace TeacherPlatform.Controllers
         {
             var tutorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-            // Получаем ID студентов текущего преподавателя
             var studentIds = await _context.Students
                 .Where(s => s.TutorId == tutorId)
                 .Select(s => s.StudentId)
                 .ToListAsync();
 
-            // Получаем уроки для этих студентов
             var lessons = await _context.Lessons
                 .Include(l => l.Student)
                 .Where(l => studentIds.Contains(l.StudentId))

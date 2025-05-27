@@ -36,6 +36,11 @@ namespace TeacherPlatform.Services
         {
             if (lesson == null) throw new ArgumentNullException(nameof(lesson));
 
+            if (!await IsTimeSlotAvailable(lesson.StudentId, lesson.StartTime, lesson.EndTime))
+            {
+                throw new InvalidOperationException("Это время уже занято другим уроком");
+            }
+
             lesson.Status ??= "Planned";
             _db.Lessons.Add(lesson);
             await _db.SaveChangesAsync();
@@ -49,10 +54,15 @@ namespace TeacherPlatform.Services
             if (existingLesson == null)
                 throw new Exception("Урок не найден");
 
+            if (!await IsTimeSlotAvailable(model.StudentId, model.StartTime, model.EndTime, lessonId))
+            {
+                throw new InvalidOperationException("Это время уже занято другим уроком");
+            }
+
             existingLesson.Title = model.Title;
             existingLesson.Description = model.Description;
-            existingLesson.StartTime = model.StartTime;
-            existingLesson.EndTime = model.EndTime;
+            existingLesson.StartTime = model.StartTime.ToUniversalTime();
+            existingLesson.EndTime = model.EndTime.ToUniversalTime();
             existingLesson.Status = model.Status ?? "Planned";
             existingLesson.StudentId = model.StudentId;
 
@@ -68,6 +78,22 @@ namespace TeacherPlatform.Services
 
             _db.Lessons.Remove(lesson);
             await _db.SaveChangesAsync();
+        }
+
+        public async Task<bool> IsTimeSlotAvailable(int studentId, DateTime startTime, DateTime endTime, int? excludeLessonId = null)
+        {
+            var utcStart = startTime.ToUniversalTime();
+            var utcEnd = endTime.ToUniversalTime();
+
+            if (utcStart >= utcEnd)
+            {
+                return false;
+            }
+
+            return !await _db.Lessons.AnyAsync(l =>
+                l.LessonId != excludeLessonId &&
+                l.StartTime < utcEnd &&
+                l.EndTime > utcStart);
         }
 
         public byte[] GenerateCalendarReport(List<Lesson> lessons)

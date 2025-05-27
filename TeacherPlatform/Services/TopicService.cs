@@ -10,7 +10,6 @@ namespace TeacherPlatform.Services
 
         public TopicService(TutorDbContext db) => _db = db;
 
-        // Получить все темы с подтемами
         public async Task<List<Topic>> GetAllTopicsWithSubTopics()
         {
             return await _db.Topics
@@ -19,7 +18,6 @@ namespace TeacherPlatform.Services
                 .ToListAsync();
         }
 
-        // Создать тему
         public async Task<Topic> CreateTopic(string title)
         {
             var topic = new Topic { Title = title };
@@ -28,7 +26,6 @@ namespace TeacherPlatform.Services
             return topic;
         }
 
-        // Добавить подтему
         public async System.Threading.Tasks.Task AddSubTopic(int topicId, string title)
         {
             var order = await _db.SubTopics
@@ -53,10 +50,8 @@ namespace TeacherPlatform.Services
 
             if (topic == null) return false;
 
-            // Удаляем сначала все подтемы
             _db.SubTopics.RemoveRange(topic.SubTopics);
 
-            // Затем удаляем саму тему
             _db.Topics.Remove(topic);
 
             await _db.SaveChangesAsync();
@@ -70,7 +65,6 @@ namespace TeacherPlatform.Services
 
             _db.SubTopics.Remove(subTopic);
 
-            // Обновляем порядок оставшихся подтем
             var remainingSubTopics = await _db.SubTopics
                 .Where(st => st.TopicId == subTopic.TopicId)
                 .OrderBy(st => st.Order)

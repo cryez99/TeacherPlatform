@@ -88,7 +88,7 @@ namespace TeacherPlatform.Controllers
                 TempData["SuccessMessage"] = "План создан";
                 return RedirectToAction("Details", new { id = plan.StudyPlanId });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Ошибка при создании учебного плана");
                 ModelState.AddModelError("", "Произошла ошибка при создании плана");

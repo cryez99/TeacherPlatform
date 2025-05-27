@@ -57,7 +57,6 @@ namespace TeacherPlatform.Controllers
                     return View("Index", user);
                 }
 
-                // Обновляем аутентификационные куки
                 await HttpContext.SignOutAsync();
                 var claims = new List<Claim>
                 {
@@ -97,14 +96,12 @@ namespace TeacherPlatform.Controllers
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-                // Проверяем, что новый пароль и подтверждение совпадают
                 if (model.NewPassword != model.ConfirmPassword)
                 {
                     ModelState.AddModelError("ConfirmPassword", "Пароли не совпадают");
                     return View(model);
                 }
 
-                // Проверяем, что новый пароль отличается от текущего
                 if (model.CurrentPassword == model.NewPassword)
                 {
                     ModelState.AddModelError("NewPassword", "Новый пароль должен отличаться от текущего");
