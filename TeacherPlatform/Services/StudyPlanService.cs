@@ -176,18 +176,23 @@ namespace TeacherPlatform.Services
             return currentDate;
         }
 
-        public async Task<StudyPlanEditModel> GetStudyPlanForEditAsync(int planId)
+        public async Task<StudyPlanEditModel> GetStudyPlanForEditAsync(int planId, int tutorId)
         {
             var plan = await _db.StudyPlans
                 .Include(sp => sp.Lessons)
                     .ThenInclude(l => l.Student)
                 .Include(sp => sp.Topics)
                     .ThenInclude(t => t.SubTopics)
-                .FirstOrDefaultAsync(sp => sp.StudyPlanId == planId);
+                .FirstOrDefaultAsync(sp => sp.StudyPlanId == planId &&
+                                         sp.Lessons.Any(l => l.Student.TutorId == tutorId));
 
             if (plan == null) return null;
 
-            var allStudents = await _db.Students.ToListAsync();
+            // Фильтруем студентов по репетитору
+            var allStudents = await _db.Students
+                .Where(s => s.TutorId == tutorId)
+                .ToListAsync();
+
             var allTopics = await _db.Topics.Include(t => t.SubTopics).ToListAsync();
 
             var model = new StudyPlanEditModel

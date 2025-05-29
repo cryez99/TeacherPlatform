@@ -189,7 +189,7 @@ namespace TeacherPlatform.Controllers
                 return NotFound();
             }
 
-            var model = await _studyPlanService.GetStudyPlanForEditAsync(id);
+            var model = await _studyPlanService.GetStudyPlanForEditAsync(id, tutorId);
             return View(model);
         }
 
